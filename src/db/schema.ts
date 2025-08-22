@@ -1,13 +1,26 @@
-import { pgTable, serial, text, timestamp, primaryKey, integer, boolean } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  serial,
+  text,
+  timestamp,
+  primaryKey,
+  integer,
+  boolean,
+  uuid,
+} from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm/sql";
 import type { AdapterAccount } from "next-auth/adapters";
 
 export const users = pgTable("users", {
-  id: text("id").notNull().primaryKey(),
+  id: uuid("id")
+    .default(sql`uuid_generate_v7()`)
+    .primaryKey()
+    .defaultRandom(),
   name: text("name"),
   email: text("email").notNull(),
   emailVerified: timestamp("emailVerified", { mode: "date" }),
   image: text("image"),
-  password: text("password"), // Added password column
+  passwordHash: text("passwordHash"), // Added password column
   role: text("role").default("user").notNull(), // Added role column
 });
 
@@ -29,7 +42,9 @@ export const accounts = pgTable(
     session_state: text("session_state"),
   },
   (account) => ({
-    compoundKey: primaryKey({ columns: [account.provider, account.providerAccountId] }),
+    compoundKey: primaryKey({
+      columns: [account.provider, account.providerAccountId],
+    }),
   })
 );
 

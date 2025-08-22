@@ -1,16 +1,17 @@
-"use client";
-
-import { useSession, signIn, signOut } from "next-auth/react";
+import { auth } from "@/lib/auth";
+import { signIn, signOut } from "next-auth/react";
 import { useState } from "react";
 
-export default function Home() {
-  const { data: session } = useSession();
+export default async function Home() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
+  const session = await auth();
 
   const handleSignIn = async () => {
     await signIn("credentials", { email, password, callbackUrl: "/" });
   };
+  ``;
 
   if (session) {
     return (
