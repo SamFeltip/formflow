@@ -1,9 +1,16 @@
 "use client";
 
 import { useSession, signIn, signOut } from "next-auth/react";
+import { useState } from "react";
 
 export default function Home() {
   const { data: session } = useSession();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const handleSignIn = async () => {
+    await signIn("credentials", { email, password, callbackUrl: "/" });
+  };
 
   if (session) {
     return (
@@ -24,12 +31,28 @@ export default function Home() {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen py-2">
       <h1 className="text-2xl font-bold">You are not logged in</h1>
-      <button
-        onClick={() => signIn("google")}
-        className="mt-4 px-4 py-2 bg-green-500 text-white rounded-md"
-      >
-        Sign in with Google
-      </button>
+      <div className="mt-4 flex flex-col space-y-2">
+        <input
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="px-4 py-2 border rounded-md text-black"
+        />
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="px-4 py-2 border rounded-md text-black"
+        />
+        <button
+          onClick={handleSignIn}
+          className="px-4 py-2 bg-green-500 text-white rounded-md"
+        >
+          Sign in
+        </button>
+      </div>
     </div>
   );
 }

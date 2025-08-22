@@ -7,6 +7,7 @@ export const users = pgTable("users", {
   email: text("email").notNull(),
   emailVerified: timestamp("emailVerified", { mode: "date" }),
   image: text("image"),
+  password: text("password"), // Added password column
   role: text("role").default("user").notNull(), // Added role column
 });
 
