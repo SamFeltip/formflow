@@ -1,6 +1,5 @@
 import { db } from "@/db";
 import { users } from "@/db/schema";
-import { User } from "next-auth";
 
 export function saltAndHashPassword(password?: string): string {
   return password + "_hashed";
@@ -28,5 +27,9 @@ export async function registerCredentials(credentials: {
       role: users.role,
     });
 
-  return user[0] || null;
+  if (user.length === 0 || user[0] === undefined) {
+    throw new Error("User registration failed");
+  }
+
+  return user[0];
 }
