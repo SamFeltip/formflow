@@ -1,6 +1,3 @@
-import { db } from "@/db";
-import { users } from "@/db/schema";
-
 export function saltAndHashPassword(password?: string): string {
   return password + "_hashed";
 }

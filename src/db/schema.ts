@@ -1,26 +1,31 @@
-import { integer, jsonb, pgTable, uuid } from "drizzle-orm/pg-core";
-import { text, timestamp, boolean, pgSchema } from "drizzle-orm/pg-core";
-import { sql } from "drizzle-orm/sql";
+import { integer, jsonb, pgEnum, pgTable } from "drizzle-orm/pg-core";
+import { text, timestamp, boolean } from "drizzle-orm/pg-core";
 
-const schema = pgSchema("schema");
+export const userRoleEnum = pgEnum("user_role", ["user", "approver", "admin"]);
 
-export const users = schema.table("users", {
+export const users = pgTable("users", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
   emailVerified: boolean("email_verified")
     .$defaultFn(() => false)
     .notNull(),
-  image: text("image"),
+  image: text("image")
+    .notNull()
+    .default("https://randomuser.me/api/portraits/men/1.jpg"),
   createdAt: timestamp("created_at")
     .$defaultFn(() => /* @__PURE__ */ new Date())
     .notNull(),
   updatedAt: timestamp("updated_at")
     .$defaultFn(() => /* @__PURE__ */ new Date())
     .notNull(),
+  role: text("role").notNull().default("user"),
+  banned: boolean("banned"),
+  banReason: text("ban_reason"),
+  banExpires: timestamp("ban_expires"),
 });
 
-export const sessions = schema.table("sessions", {
+export const sessions = pgTable("sessions", {
   id: text("id").primaryKey(),
   expiresAt: timestamp("expires_at").notNull(),
   token: text("token").notNull().unique(),
@@ -31,9 +36,10 @@ export const sessions = schema.table("sessions", {
   userId: text("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
+  impersonatedBy: text("impersonated_by"),
 });
 
-export const accounts = schema.table("accounts", {
+export const accounts = pgTable("accounts", {
   id: text("id").primaryKey(),
   accountId: text("account_id").notNull(),
   providerId: text("provider_id").notNull(),
@@ -51,7 +57,7 @@ export const accounts = schema.table("accounts", {
   updatedAt: timestamp("updated_at").notNull(),
 });
 
-export const verifications = schema.table("verifications", {
+export const verifications = pgTable("verifications", {
   id: text("id").primaryKey(),
   identifier: text("identifier").notNull(),
   value: text("value").notNull(),
@@ -66,17 +72,11 @@ export const verifications = schema.table("verifications", {
 
 // ------
 
-export const userRoleEnum = schema.enum("user_role", [
-  "user",
-  "approver",
-  "admin",
-]);
-
-export const approverUserRelationshipTypeEnum = schema.enum(
+export const approverUserRelationshipTypeEnum = pgEnum(
   "approver_user_relationship_type",
   ["director", "supervisor", "manager"]
 );
-export const formFieldTypeEnum = schema.enum("form_field_type", [
+export const formFieldTypeEnum = pgEnum("form_field_type", [
   "text",
   "email",
   "textarea",
@@ -86,7 +86,7 @@ export const formFieldTypeEnum = schema.enum("form_field_type", [
   "select",
   "checkbox",
 ]);
-export const submissionStatusEnum = schema.enum("submission_status", [
+export const submissionStatusEnum = pgEnum("submission_status", [
   "pending",
   "submitted",
   "in_progress",
@@ -95,30 +95,32 @@ export const submissionStatusEnum = schema.enum("submission_status", [
   "rejected",
   "approved",
 ]);
-export const timelineScheduleUnitEnum = schema.enum("timeline_schedule_unit", [
+export const timelineScheduleUnitEnum = pgEnum("timeline_schedule_unit", [
   "never",
   "days",
   "weeks",
   "months",
   "years",
 ]);
-export const timelineStartDateUnitEnum = schema.enum(
-  "timeline_start_date_unit",
-  ["days", "weeks", "months", "years"]
-);
+export const timelineStartDateUnitEnum = pgEnum("timeline_start_date_unit", [
+  "days",
+  "weeks",
+  "months",
+  "years",
+]);
 
-export const forms = schema.table("forms", {
+export const forms = pgTable("forms", {
   id: text("id").primaryKey(),
   created_at: timestamp("created_at").defaultNow(),
-  created_by: uuid("created_by").references(() => users.id),
+  created_by: text("created_by").references(() => users.id),
   description: text("description"),
   name: text("name").notNull(),
   updated_at: timestamp("updated_at").defaultNow(),
 });
 
-export const formFields = schema.table("form_fields", {
+export const formFields = pgTable("form_fields", {
   id: text("id").primaryKey(),
-  form_id: uuid("form_id")
+  form_id: text("form_id")
     .notNull()
     .references(() => forms.id),
   label: text("label").notNull(),
@@ -128,100 +130,97 @@ export const formFields = schema.table("form_fields", {
   type: formFieldTypeEnum("type").notNull(),
 });
 
-export const timelines = schema.table("timelines", {
+export const timelines = pgTable("timelines", {
   id: text("id").primaryKey(),
   created_at: timestamp("created_at").defaultNow(),
-  created_by: uuid("created_by").references(() => users.id),
+  created_by: text("created_by").references(() => users.id),
   description: text("description"),
   duration: text("duration"),
-  form_id: uuid("form_id").references(() => forms.id),
+  form_id: text("form_id").references(() => forms.id),
   name: text("name").notNull(),
   updated_at: timestamp("updated_at").defaultNow(),
 });
 
-export const approvers = schema.table("approvers", {
+export const approvers = pgTable("approvers", {
   id: text("id").primaryKey(),
-  timeline_id: uuid("timeline_id")
+  timeline_id: text("timeline_id")
     .notNull()
     .references(() => timelines.id),
-  user_id: uuid("user_id")
+  user_id: text("user_id")
     .notNull()
     .references(() => users.id),
 });
 
-export const approverUserRelationships = schema.table(
+export const approverUserRelationships = pgTable(
   "approver_user_relationships",
   {
     id: text("id").primaryKey(),
-    approver_id: uuid("approver_id")
+    approver_id: text("approver_id")
       .notNull()
       .references(() => users.id),
     relationship_type:
       approverUserRelationshipTypeEnum("relationship_type").notNull(),
-    user_id: uuid("user_id")
+    user_id: text("user_id")
       .notNull()
       .references(() => users.id),
   }
 );
 
-export const submissions = schema.table("submissions", {
+export const submissions = pgTable("submissions", {
   id: text("id").primaryKey(),
   approved_at: timestamp("approved_at"),
-  form_id: uuid("form_id")
+  form_id: text("form_id")
     .notNull()
     .references(() => forms.id),
   priority: text("priority"),
   submitted_at: timestamp("submitted_at").defaultNow().notNull(),
-  timeline_id: uuid("timeline_id")
+  timeline_id: text("timeline_id")
     .notNull()
     .references(() => timelines.id),
-  user_id: uuid("user_id")
+  user_id: text("user_id")
     .notNull()
     .references(() => users.id),
   values: jsonb("values"),
 });
 
-export const feedbackHistory = schema.table("feedback_history", {
+export const feedbackHistory = pgTable("feedback_history", {
   id: text("id").primaryKey(),
   message: text("message").notNull(),
   step: integer("step").notNull(),
-  submission_id: uuid("submission_id")
+  submission_id: text("submission_id")
     .notNull()
     .references(() => submissions.id),
   timestamp: timestamp("timestamp").defaultNow(),
 });
 
-export const timelineForms = schema.table("timeline_forms", {
+export const timelineForms = pgTable("timeline_forms", {
   id: text("id").primaryKey(),
-  form_id: uuid("form_id")
+  form_id: text("form_id")
     .notNull()
     .references(() => forms.id),
   schedule_amount: integer("schedule_amount").notNull(),
   schedule_unit: timelineScheduleUnitEnum("schedule_unit").notNull(),
   start_date_amount: integer("start_date_amount").notNull(),
   start_date_unit: timelineStartDateUnitEnum("start_date_unit").notNull(),
-  timeline_id: uuid("timeline_id")
+  timeline_id: text("timeline_id")
     .notNull()
     .references(() => timelines.id),
 });
 
-export const userTimelineAssignments = schema.table(
-  "user_timeline_assignments",
-  {
-    id: text("id").primaryKey(),
-    timeline_id: uuid("timeline_id")
-      .notNull()
-      .references(() => timelines.id),
-    user_id: uuid("user_id")
-      .notNull()
-      .references(() => users.id),
-  }
-);
+export const userTimelineAssignments = pgTable("user_timeline_assignments", {
+  id: text("id").primaryKey(),
+  timeline_id: text("timeline_id")
+    .notNull()
+    .references(() => timelines.id),
+  user_id: text("user_id")
+    .notNull()
+    .references(() => users.id),
+});
 
-export const workflowSteps = schema.table("workflow_steps", {
+export const workflowSteps = pgTable("workflow_steps", {
   id: text("id").primaryKey(),
   can_edit_fields: jsonb("can_edit_fields"),
-  form_id: uuid("form_id")
+  form_id: text("form_id")
     .notNull()
     .references(() => forms.id),
   name: text("name").notNull(),
