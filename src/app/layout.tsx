@@ -9,6 +9,7 @@ import {
 import { Navbar } from "@/components/layout/navbar";
 import { auth } from "@/lib/auth";
 import { authClient } from "@/lib/auth-client";
+import { headers } from "next/headers";
 
 export const metadata: Metadata = {
   title: "Formflow",
@@ -23,7 +24,10 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const { data: session } = await authClient.getSession();
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
   const user = session?.user;
 
   return (

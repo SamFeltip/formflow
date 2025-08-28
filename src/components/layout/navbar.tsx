@@ -25,8 +25,19 @@ import {
 
 import { users } from "@/db/schema";
 import React from "react";
+import { SignOutButton } from "../auth/SignOutButton";
 
-export function Navbar({ user }: { user?: typeof users.$inferSelect }) {
+export function Navbar({
+  user,
+}: {
+  user?: {
+    role?: string | null;
+    image?: string | null;
+    name: string;
+    email: string;
+    id: string;
+  };
+}) {
   const pathname = usePathname();
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -98,7 +109,7 @@ export function Navbar({ user }: { user?: typeof users.$inferSelect }) {
                     className="relative h-8 w-8 rounded-full"
                   >
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src={user.image} alt="User" />
+                      <AvatarImage src={user.image ?? ""} alt="User" />
                       <AvatarFallback>
                         {user?.role ? user?.role[0].toUpperCase() : "U"}
                       </AvatarFallback>
@@ -125,20 +136,12 @@ export function Navbar({ user }: { user?: typeof users.$inferSelect }) {
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem>
-                    <form
-                      action="/auth/sign-out"
-                      method="post"
-                      className="w-full"
-                    >
-                      <Button type="submit" className="w-full text-left">
-                        Sign Out
-                      </Button>
-                    </form>
+                    <SignOutButton />
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Link href="/login">
+              <Link href="/sign-in">
                 <Button variant="ghost">Sign In</Button>
               </Link>
             )}

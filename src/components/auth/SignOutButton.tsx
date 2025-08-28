@@ -2,6 +2,7 @@
 import { authClient } from "@/lib/auth-client";
 import { redirect } from "next/navigation";
 import { FormEvent, useState } from "react";
+import { Button } from "../ui/button";
 
 export function SignOutButton() {
   const [signOutState, setSignOutState] = useState<
@@ -25,26 +26,9 @@ export function SignOutButton() {
 
   return (
     <form onSubmit={handleSubmit}>
-      <button
-        type="submit"
-        className="
-              px-4 py-2
-              bg-gray-500
-              text-white
-              rounded-md
-              transition
-              duration-150
-              ease-in-out
-              hover:bg-gray-600
-              active:scale-95
-              cursor-pointer
-              disabled:opacity-50
-              disabled:cursor-not-allowed
-          "
-        disabled={signOutState?.state === "loading"}
-      >
+      <Button type="submit" disabled={signOutState?.state === "loading"}>
         Sign out
-      </button>
+      </Button>
     </form>
   );
 }
